@@ -9,7 +9,7 @@ BRANCH = $(strip $(shell git rev-parse --abbrev-ref HEAD))
 DOCKER_CLI ?= docker
 PROMTOOL_CLI ?= promtool
 PKGS = $(shell go list ./... | grep -v /vendor/ | grep -v /tests/e2e)
-ARCH ?= $(shell go env GOARCH)
+ARCH ?= arm64
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GIT_COMMIT ?= $(shell git rev-parse --short HEAD)
 ALL_ARCH = amd64 arm arm64 ppc64le s390x
@@ -56,7 +56,7 @@ doccheck: generate
 	@echo OK
 
 build-local:
-	GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "-s -w -X ${PKG}/version.Version=${TAG} -X ${PKG}/version.Revision=${GIT_COMMIT} -X ${PKG}/version.Branch=${BRANCH} -X ${PKG}/version.BuildUser=${USER}@${HOST} -X ${PKG}/version.BuildDate=${BUILD_DATE}" -o kube-state-metrics
+	GOOS=linux
 
 build: kube-state-metrics
 
@@ -64,7 +64,7 @@ kube-state-metrics:
 	${DOCKER_CLI} run --rm -v "${PWD}:/go/src/k8s.io/kube-state-metrics" -w /go/src/k8s.io/kube-state-metrics golang:${GO_VERSION} make build-local
 
 test-unit:
-	GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(ARCH) $(TESTENVVAR) go test --race $(FLAGS) $(PKGS)
+	GOOS=linux
 
 test-rules:
 	${PROMTOOL_CLI} test rules tests/rules/alerts-test.yaml
